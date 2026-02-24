@@ -1,8 +1,19 @@
 @import "tailwindcss";
 
+@theme {
+  /* Brand-inspired palette from tmaxelectronics.com */
+  --color-bg: #0c0a09; /* rich dark brown */
+  --color-surface: #1c1917; /* card background */
+  --color-accent: #eab308; /* golden accent */
+  --color-accent-soft: #facc15;
+  --color-border-subtle: #292524;
+  --color-text-main: #f9fafb;
+  --color-text-muted: #a3a3a3;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: var(--color-bg);
+  --foreground: var(--color-text-main);
 }
 
 @theme inline {
@@ -10,13 +21,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
