@@ -5,6 +5,7 @@ import { createSupabaseClient } from "@/lib/supabaseClient";
 import { AddRawMaterialForm } from "@/components/inventory/AddRawMaterial";
 import { TransferRequestsList } from "@/components/transfer/TransferRequests";
 import { ExportButton } from "@/components/ui/ExportButton";
+import { ImportExcelButton } from "@/components/ui/ImportExcelButton";
 
 type RawMaterial = {
   id: number;
@@ -20,13 +21,13 @@ export default function ProcurementDashboard() {
 
   useEffect(() => {
     const supabase = createSupabaseClient();
-    const fetch = async () => {
+    const fetchMaterials = async () => {
       const { data } = await supabase.from("raw_materials").select("*").order("name");
       if (data) setMaterials(data as RawMaterial[]);
     };
-    fetch();
+    fetchMaterials();
     const ch = supabase.channel("rm_ch")
-      .on("postgres_changes", { event: "*", schema: "public", table: "raw_materials" }, fetch)
+      .on("postgres_changes", { event: "*", schema: "public", table: "raw_materials" }, fetchMaterials)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -47,9 +48,15 @@ export default function ProcurementDashboard() {
 
       {/* Raw Materials Table Card */}
       <div className="card">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-800">Raw Materials Inventory</h2>
-          <ExportButton data={exportData} filename="raw_materials" sheetName="Raw Materials" />
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">Raw Materials Inventory</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Import a spreadsheet or export current stock to Excel.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <ImportExcelButton />
+            <ExportButton data={exportData} filename="raw_materials" sheetName="Raw Materials" />
+          </div>
         </div>
         <div className="table-wrap">
           <table className="min-w-full">
