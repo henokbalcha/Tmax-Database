@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { createSupabaseClient } from "@/lib/supabaseClient";
-import { TransferRequestsList } from "@/components/transfer/TransferRequests";
 import { AddRawMaterialForm } from "@/components/inventory/AddRawMaterial";
+import { TransferRequestsList } from "@/components/transfer/TransferRequests";
+import { ExportButton } from "@/components/ui/ExportButton";
 
 type RawMaterial = {
   id: number;
@@ -19,114 +20,76 @@ export default function ProcurementDashboard() {
 
   useEffect(() => {
     const supabase = createSupabaseClient();
-
-    const fetchMaterials = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("raw_materials")
-          .select("*")
-          .order("name");
-        if (error) {
-          console.warn("Failed to load raw_materials, using placeholders", error);
-          return;
-        }
-        if (data) {
-          setMaterials(data as RawMaterial[]);
-        }
-      } catch (e) {
-        console.warn("Error fetching raw_materials, using placeholders", e);
-      }
+    const fetch = async () => {
+      const { data } = await supabase.from("raw_materials").select("*").order("name");
+      if (data) setMaterials(data as RawMaterial[]);
     };
-
-    fetchMaterials();
-
-    const channel = supabase
-      .channel("raw_materials_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "raw_materials" },
-        () => fetchMaterials()
-      )
+    fetch();
+    const ch = supabase.channel("rm_ch")
+      .on("postgres_changes", { event: "*", schema: "public", table: "raw_materials" }, fetch)
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(ch); };
   }, []);
+
+  const exportData = materials.map(({ id: _id, ...rest }) => rest);
 
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Procurement</h1>
-        <p className="text-sm text-slate-700">
-          Manage incoming raw materials and respond to manufacturing requests.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-800">Procurement</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Manage raw material stock and approve manufacturing requests.</p>
       </header>
 
-      <AddRawMaterialForm />
+      {/* Add Material Form Card */}
+      <div className="card">
+        <AddRawMaterialForm />
+      </div>
 
-      <section className="rounded-xl border border-blue-100 bg-white shadow-sm p-4">
-        <h2 className="mb-3 text-sm font-semibold text-blue-950">
-          Raw Materials
-        </h2>
-        <div className="overflow-hidden rounded-lg border border-blue-100">
-          <table className="min-w-full divide-y divide-slate-800 text-sm">
-            <thead className="bg-blue-50">
+      {/* Raw Materials Table Card */}
+      <div className="card">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-800">Raw Materials Inventory</h2>
+          <ExportButton data={exportData} filename="raw_materials" sheetName="Raw Materials" />
+        </div>
+        <div className="table-wrap">
+          <table className="min-w-full">
+            <thead>
               <tr>
-                <th className="px-3 py-2 text-left font-medium text-slate-700">
-                  Name
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-slate-700">
-                  SKU
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-slate-700">
-                  Quantity
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-slate-700">
-                  Color
-                </th>
+                <th>Name</th>
+                <th>SKU</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Color</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800 bg-white">
+            <tbody>
               {materials.map((m) => (
                 <tr key={m.id}>
-                  <td className="px-3 py-2">{m.name}</td>
-                  <td className="px-3 py-2 text-slate-700">{m.sku}</td>
-                  <td className="px-3 py-2">
-                    {m.quantity}{" "}
-                    <span className="text-xs text-slate-400">{m.unit}</span>
-                  </td>
-                  <td className="px-3 py-2">
-                    <span
-                      className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium text-slate-900"
-                      style={{ backgroundColor: m.color_code }}
-                    >
-                      {m.color_code}
+                  <td className="font-medium text-slate-800">{m.name}</td>
+                  <td className="font-mono text-slate-500">{m.sku}</td>
+                  <td className="text-slate-700">{m.quantity}</td>
+                  <td className="text-slate-500">{m.unit}</td>
+                  <td>
+                    <span className="inline-flex items-center gap-2">
+                      <span
+                        className="inline-block h-4 w-4 rounded-full border border-slate-200 shadow-sm"
+                        style={{ background: m.color_code }}
+                      />
+                      <span className="font-mono text-xs text-slate-400">{m.color_code}</span>
                     </span>
                   </td>
                 </tr>
               ))}
               {materials.length === 0 && (
-                <tr>
-                  <td
-                    className="px-3 py-6 text-center text-sm text-slate-400"
-                    colSpan={4}
-                  >
-                    No raw materials yet.
-                  </td>
-                </tr>
+                <tr><td colSpan={5} className="py-10 text-center text-sm text-slate-400">No raw materials yet. Add one above.</td></tr>
               )}
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
 
-      <TransferRequestsList
-        role="PROCUREMENT"
-        fromDept="PROCUREMENT"
-        toDept="MANUFACTURING"
-      />
+      {/* Transfer Requests */}
+      <TransferRequestsList role="PROCUREMENT" fromDept="PROCUREMENT" toDept="MANUFACTURING" />
     </div>
   );
 }
-

@@ -3,120 +3,83 @@
 import { useEffect, useState } from "react";
 import { createSupabaseClient } from "@/lib/supabaseClient";
 import { TransferRequestsList, ProducedGoodsTransferForm } from "@/components/transfer/TransferRequests";
+import { ExportButton } from "@/components/ui/ExportButton";
 
-type ProducedGood = {
-  id: number;
-  name: string;
-  sku: string;
-  quantity: number;
-};
+type ProducedGood = { id: number; name: string; sku: string; quantity: number };
 
 export default function RetailDashboard() {
   const [goods, setGoods] = useState<ProducedGood[]>([]);
 
   useEffect(() => {
     const supabase = createSupabaseClient();
-
-    const fetchGoods = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("produced_goods")
-          .select("*")
-          .order("name");
-        if (error) {
-          console.warn("Failed to load produced_goods for retail, using placeholders", error);
-          return;
-        }
-        if (data) {
-          setGoods(data as ProducedGood[]);
-        }
-      } catch (e) {
-        console.warn("Error fetching produced_goods for retail, using placeholders", e);
-      }
+    const fetch = async () => {
+      const { data } = await supabase.from("produced_goods").select("*").order("name");
+      if (data) setGoods(data as ProducedGood[]);
     };
-
-    fetchGoods();
-
-    const channel = supabase
-      .channel("retail_goods_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "produced_goods" },
-        () => fetchGoods()
-      )
+    fetch();
+    const ch = supabase.channel("retail_ch")
+      .on("postgres_changes", { event: "*", schema: "public", table: "produced_goods" }, fetch)
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(ch); };
   }, []);
+
+  const exportData = goods.map(({ id: _id, ...rest }) => rest);
 
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Retail Inventory
-        </h1>
-        <p className="text-sm text-slate-700">
-          Manage storefront stock levels and sync with POS sales.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-800">Retail Inventory</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Manage storefront stock levels and request replenishment from the warehouse.</p>
       </header>
 
+      {/* Request more stock from Distribution */}
       <ProducedGoodsTransferForm
         fromDept="DISTRIBUTION"
         toDept="RETAIL"
-        title="Request Goods from Distribution"
-        helperText="Request finished goods from the Warehouse to be moved to Retail."
+        title="Request Goods from Warehouse"
+        helperText="Request finished goods from Distribution to be moved to the Retail store."
       />
 
-      <TransferRequestsList
-        role="RETAIL"
-        fromDept="DISTRIBUTION"
-        toDept="RETAIL"
-      />
+      {/* Status of incoming requests */}
+      <TransferRequestsList role="RETAIL" fromDept="DISTRIBUTION" toDept="RETAIL" />
 
-      <section className="rounded-xl border border-blue-100 bg-white shadow-sm p-4">
-        <h2 className="mb-3 text-sm font-semibold text-blue-950">
-          Shop Inventory
-        </h2>
-        <div className="overflow-hidden rounded-lg border border-blue-100">
-          <table className="min-w-full divide-y divide-slate-800 text-sm">
-            <thead className="bg-blue-50">
+      {/* Shop Inventory Table */}
+      <div className="card">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-800">Shop Inventory</h2>
+          <ExportButton data={exportData} filename="retail_inventory" sheetName="Retail" />
+        </div>
+        <div className="table-wrap">
+          <table className="min-w-full">
+            <thead>
               <tr>
-                <th className="px-3 py-2 text-left font-medium text-slate-700">
-                  Name
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-slate-700">
-                  SKU
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-slate-700">
-                  Quantity
-                </th>
+                <th>Name</th>
+                <th>SKU</th>
+                <th>Qty on Shelves</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800 bg-white">
+            <tbody>
               {goods.map((g) => (
                 <tr key={g.id}>
-                  <td className="px-3 py-2">{g.name}</td>
-                  <td className="px-3 py-2 text-slate-700">{g.sku}</td>
-                  <td className="px-3 py-2">{g.quantity}</td>
+                  <td className="font-medium text-slate-800">{g.name}</td>
+                  <td className="font-mono text-slate-500">{g.sku}</td>
+                  <td>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${g.quantity > 10 ? "bg-emerald-100 text-emerald-700" :
+                        g.quantity > 0 ? "bg-amber-100 text-amber-700" :
+                          "bg-red-100 text-red-600"
+                      }`}>
+                      {g.quantity}
+                    </span>
+                  </td>
                 </tr>
               ))}
               {goods.length === 0 && (
-                <tr>
-                  <td
-                    className="px-3 py-6 text-center text-sm text-slate-400"
-                    colSpan={3}
-                  >
-                    No retail stock yet.
-                  </td>
-                </tr>
+                <tr><td colSpan={3} className="py-10 text-center text-sm text-slate-400">No retail stock yet.</td></tr>
               )}
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
-

@@ -1,11 +1,24 @@
 @import "tailwindcss";
 
+/* ── Override Tailwind's blue palette with brand colour #29b6f6 ── */
 @theme {
-  --color-bg: #f8fafc;
+  --color-blue-50: #e1f5fe;
+  --color-blue-100: #b3e5fc;
+  --color-blue-200: #81d4fa;
+  --color-blue-300: #4fc3f7;
+  --color-blue-400: #29b6f6;
+  /* primary brand */
+  --color-blue-500: #03a9f4;
+  --color-blue-600: #039be5;
+  /* buttons / active sidebar */
+  --color-blue-700: #0288d1;
+  /* hover */
+  --color-blue-800: #0277bd;
+  --color-blue-900: #01579b;
+
+  --color-bg: #f0f9ff;
   --color-surface: #ffffff;
-  --color-accent: #1d4ed8;
-  --color-accent-soft: #3b82f6;
-  --color-border-subtle: #e2e8f0;
+  --color-border-subtle: #e0f7fa;
   --color-text-main: #0f172a;
   --color-text-muted: #64748b;
 }
@@ -13,52 +26,73 @@
 :root {
   --background: var(--color-bg);
   --foreground: var(--color-text-main);
+
+  /* Named brand shorthand */
+  --clr-brand: #29b6f6;
+  --clr-brand-hover: #0288d1;
+  --clr-brand-light: #e1f5fe;
+  --clr-brand-border: #b3e5fc;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  font-family: 'Inter', system-ui, Arial, sans-serif;
 }
 
-/* ── Tables: Give tables room to breathe ── */
-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+/* ── Card ── */
+.card {
+  background: #ffffff;
+  border: 1px solid var(--clr-brand-border);
+  border-radius: 1rem;
+  /* 16px */
+  box-shadow: 0 2px 8px rgba(41, 182, 246, 0.10), 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: 1.25rem;
 }
 
-thead th {
-  padding: 10px 16px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-tbody td {
-  padding: 10px 16px;
-  font-size: 0.875rem;
-  white-space: nowrap;
-}
-
-/* Responsive table wrappers — horizontal scroll when content overflows */
+/* ── Table wrapper: horizontal scroll + card look ── */
 .table-wrap {
+  width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--clr-brand-border);
 }
 
-/* ── Animated approval buttons ── */
+.table-wrap table {
+  border-collapse: collapse;
+}
+
+.table-wrap thead th {
+  padding: 10px 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: var(--clr-brand-light);
+  color: #0277bd;
+}
+
+.table-wrap tbody td {
+  padding: 11px 16px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  border-top: 1px solid #e1f5fe;
+  vertical-align: middle;
+}
+
+.table-wrap tbody tr:hover {
+  background: #f0f9ff;
+}
+
+/* ── Approve button (brand filled) ── */
 .btn-approve {
   display: inline-flex;
   align-items: center;
@@ -67,25 +101,30 @@ tbody td {
   font-size: 0.75rem;
   font-weight: 600;
   color: #fff;
-  background: #1d4ed8;
+  background: var(--clr-brand);
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.35);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  cursor: pointer;
   border: none;
+  box-shadow: 0 2px 8px rgba(41, 182, 246, 0.40);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.btn-approve:hover {
-  background: #2563eb;
+.btn-approve:hover:not(:disabled) {
+  background: var(--clr-brand-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(29, 78, 216, 0.45);
+  box-shadow: 0 6px 18px rgba(41, 182, 246, 0.45);
 }
 
-.btn-approve:active {
+.btn-approve:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.3);
 }
 
+.btn-approve:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Adjust button (ghost) ── */
 .btn-adjust {
   display: inline-flex;
   align-items: center;
@@ -93,33 +132,56 @@ tbody td {
   padding: 6px 14px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #1d4ed8;
-  background: #eff6ff;
+  color: var(--clr-brand-hover);
+  background: var(--clr-brand-light);
   border-radius: 8px;
-  border: 1px solid #bfdbfe;
-  box-shadow: 0 1px 3px rgba(29, 78, 216, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  border: 1px solid var(--clr-brand-border);
+  box-shadow: 0 1px 3px rgba(41, 182, 246, 0.12);
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.btn-adjust:hover {
-  background: #dbeafe;
+.btn-adjust:hover:not(:disabled) {
+  background: var(--clr-brand);
+  color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.2);
+  box-shadow: 0 4px 12px rgba(41, 182, 246, 0.30);
 }
 
-/* ── Sidebar active link highlight ── */
-.nav-link-active {
-  background: #eff6ff;
-  color: #1d4ed8;
-  font-weight: 600;
-  border-left: 3px solid #1d4ed8;
+.btn-adjust:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-/* ── Card surfaces ── */
-.card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 1rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+/* ── Status badges ── */
+.badge-pending {
+  background: #fff8e1;
+  color: #f57f17;
+}
+
+.badge-adjusted {
+  background: #e1f5fe;
+  color: #0277bd;
+}
+
+.badge-approved {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* ── Shared form input ── */
+.form-input {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--clr-brand-border);
+  background: var(--clr-brand-light);
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  color: #0f172a;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--clr-brand);
+  box-shadow: 0 0 0 3px rgba(41, 182, 246, 0.15);
 }

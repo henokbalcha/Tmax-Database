@@ -2,157 +2,107 @@
 
 import { useEffect, useState } from "react";
 import { createSupabaseClient } from "@/lib/supabaseClient";
-import {
-  ManufacturingTransferForm,
-  TransferRequestsList,
-  ProducedGoodsTransferForm
-} from "@/components/transfer/TransferRequests";
+import { ManufacturingTransferForm, TransferRequestsList, ProducedGoodsTransferForm } from "@/components/transfer/TransferRequests";
 import { ProduceGoodsForm } from "@/components/inventory/ProduceGoodsForm";
 import { AddProducedGoodForm } from "@/components/inventory/AddProducedGoodForm";
+import { ExportButton } from "@/components/ui/ExportButton";
 
-type ProducedGood = {
-  id: number;
-  name: string;
-  sku: string;
-  quantity: number;
-  recipe: Record<string, number>;
-};
+type ProducedGood = { id: number; name: string; sku: string; quantity: number; recipe: Record<string, number> };
 
 export default function ManufacturingDashboard() {
   const [goods, setGoods] = useState<ProducedGood[]>([]);
 
   useEffect(() => {
     const supabase = createSupabaseClient();
-
-    const fetchGoods = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("produced_goods")
-          .select("*")
-          .order("name");
-        if (error) {
-          console.warn("Failed to load produced_goods, using placeholders", error);
-          return;
-        }
-        if (data) {
-          setGoods(data as ProducedGood[]);
-        }
-      } catch (e) {
-        console.warn("Error fetching produced_goods, using placeholders", e);
-      }
+    const fetch = async () => {
+      const { data } = await supabase.from("produced_goods").select("*").order("name");
+      if (data) setGoods(data as ProducedGood[]);
     };
-
-    fetchGoods();
-
-    const channel = supabase
-      .channel("produced_goods_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "produced_goods" },
-        () => fetchGoods()
-      )
+    fetch();
+    const ch = supabase.channel("pg_ch")
+      .on("postgres_changes", { event: "*", schema: "public", table: "produced_goods" }, fetch)
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(ch); };
   }, []);
+
+  const exportData = goods.map(({ id: _id, recipe, ...rest }) => ({
+    ...rest,
+    recipe: Object.entries(recipe).map(([k, v]) => `${v}× ${k}`).join(", "),
+  }));
 
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Manufacturing
-        </h1>
-        <p className="text-sm text-slate-700">
-          Convert raw materials into finished goods using production recipes.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-800">Manufacturing</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Convert raw materials into finished goods using production recipes.</p>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-[1.5fr,2fr]">
+      {/* Define new product */}
+      <div className="card">
         <AddProducedGoodForm />
+      </div>
+
+      {/* Run production */}
+      <div className="card">
         <ProduceGoodsForm />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-6">
-          <ManufacturingTransferForm fromDept="PROCUREMENT" toDept="MANUFACTURING" />
-          <TransferRequestsList
-            role="MANUFACTURING"
-            fromDept="PROCUREMENT"
-            toDept="MANUFACTURING"
-          />
-        </div>
-        <div className="space-y-6">
-          <ProducedGoodsTransferForm
-            fromDept="MANUFACTURING"
-            toDept="DISTRIBUTION"
-            title="Transfer to Warehouse"
-            helperText="Create a PENDING transfer of finished goods to Distribution."
-          />
-          <TransferRequestsList
-            role="MANUFACTURING"
-            fromDept="MANUFACTURING"
-            toDept="DISTRIBUTION"
-          />
-        </div>
-      </div>
+      {/* Request raw materials */}
+      <ManufacturingTransferForm fromDept="PROCUREMENT" toDept="MANUFACTURING" />
 
-      <section className="rounded-xl border border-blue-100 bg-white shadow-sm p-4">
-        <h2 className="mb-3 text-sm font-semibold text-blue-950">
-          Produced Goods & Recipes
-        </h2>
-        <div className="overflow-hidden rounded-lg border border-blue-100">
-          <table className="min-w-full divide-y divide-slate-800 text-sm">
-            <thead className="bg-blue-50">
+      {/* Incoming raw material requests */}
+      <TransferRequestsList role="MANUFACTURING" fromDept="PROCUREMENT" toDept="MANUFACTURING" />
+
+      {/* Send finished goods to Distribution */}
+      <ProducedGoodsTransferForm
+        fromDept="MANUFACTURING" toDept="DISTRIBUTION"
+        title="Transfer Finished Goods to Warehouse"
+        helperText="Create a PENDING transfer of finished goods to the Distribution warehouse."
+      />
+
+      {/* Outgoing to Distribution */}
+      <TransferRequestsList role="MANUFACTURING" fromDept="MANUFACTURING" toDept="DISTRIBUTION" />
+
+      {/* Produced Goods Catalogue */}
+      <div className="card">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-800">Produced Goods &amp; Recipes</h2>
+          <ExportButton data={exportData} filename="produced_goods" sheetName="Produced Goods" />
+        </div>
+        <div className="table-wrap">
+          <table className="min-w-full">
+            <thead>
               <tr>
-                <th className="px-3 py-2 text-left font-medium text-slate-700">
-                  Name
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-slate-700">
-                  SKU
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-slate-700">
-                  Quantity
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-slate-700">
-                  Recipe
-                </th>
+                <th>Name</th>
+                <th>SKU</th>
+                <th>Qty in Stock</th>
+                <th>Recipe</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800 bg-white">
+            <tbody>
               {goods.map((g) => (
                 <tr key={g.id}>
-                  <td className="px-3 py-2">{g.name}</td>
-                  <td className="px-3 py-2 text-slate-700">{g.sku}</td>
-                  <td className="px-3 py-2">{g.quantity}</td>
-                  <td className="px-3 py-2 text-xs text-slate-700">
-                    {Object.entries(g.recipe).map(([rawSku, qty]) => (
-                      <span
-                        key={rawSku}
-                        className="mr-2 inline-flex rounded-full bg-blue-100 px-2 py-0.5"
-                      >
-                        {qty}× {rawSku}
-                      </span>
-                    ))}
+                  <td className="font-medium text-slate-800">{g.name}</td>
+                  <td className="font-mono text-slate-500">{g.sku}</td>
+                  <td className="text-slate-700">{g.quantity}</td>
+                  <td>
+                    <div className="flex flex-wrap gap-1">
+                      {Object.entries(g.recipe).map(([rawSku, qty]) => (
+                        <span key={rawSku} className="inline-flex rounded-full bg-[#e1f5fe] px-2 py-0.5 text-[11px] font-medium text-[#0288d1]">
+                          {qty}× {rawSku}
+                        </span>
+                      ))}
+                    </div>
                   </td>
                 </tr>
               ))}
               {goods.length === 0 && (
-                <tr>
-                  <td
-                    className="px-3 py-6 text-center text-sm text-slate-400"
-                    colSpan={4}
-                  >
-                    No produced goods yet.
-                  </td>
-                </tr>
+                <tr><td colSpan={4} className="py-10 text-center text-sm text-slate-400">No produced goods defined yet.</td></tr>
               )}
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
-

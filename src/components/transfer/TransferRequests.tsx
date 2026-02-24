@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseClient } from "@/lib/supabaseClient";
+import { ExportButton } from "@/components/ui/ExportButton";
 
 export type TransferStatus = "PENDING" | "ADJUSTED" | "APPROVED";
 
@@ -420,52 +421,70 @@ export function TransferRequestsList({
     }
   };
 
+  const exportData = requests.map((r) => ({
+    created: new Date(r.created_at).toLocaleString(),
+    from: r.from_dept,
+    to: r.to_dept,
+    sku: r.items[0]?.sku ?? "",
+    requested_qty: r.items[0]?.requested_qty ?? "",
+    approved_qty: r.items[0]?.approved_qty ?? "",
+    status: r.status,
+  }));
+
   return (
-    <section className="space-y-3 rounded-xl border border-blue-100 bg-white shadow-sm p-4">
+    <section className="card space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-800">
-          Transfers: <span className="text-blue-600">{fromDept}</span> → <span className="text-blue-600">{toDept}</span>
-        </h2>
-        <span className="text-xs text-slate-400">
-          {role === "MANUFACTURING" ? "Read-only view of request status." : "Adjust quantities and approve when ready."}
-        </span>
+        <div>
+          <h2 className="text-base font-semibold text-slate-800">
+            Transfers:{" "}
+            <span className="text-[#29b6f6]">{fromDept}</span>
+            {" → "}
+            <span className="text-[#29b6f6]">{toDept}</span>
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {role === "MANUFACTURING" ? "Read-only view of request status." : "Adjust quantities and approve when ready."}
+          </p>
+        </div>
+        <ExportButton
+          data={exportData}
+          filename={`transfers_${fromDept}_to_${toDept}`}
+          sheetName="Transfers"
+        />
       </div>
 
       <div className="table-wrap">
-        <table className="min-w-full divide-y divide-blue-100 text-xs">
-          <thead className="bg-blue-50">
+        <table className="min-w-full">
+          <thead>
             <tr>
-              <th className="px-4 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap">Created</th>
-              <th className="px-4 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap">Item (SKU)</th>
-              <th className="px-4 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap">Requested</th>
-              <th className="px-4 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap">Approved</th>
-              <th className="px-4 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap">Status</th>
-              {canEdit && <th className="px-4 py-2.5 text-right font-semibold text-slate-600 whitespace-nowrap">Actions</th>}
+              <th>Created</th>
+              <th>Item (SKU)</th>
+              <th>Requested</th>
+              <th>Approved</th>
+              <th>Status</th>
+              {canEdit && <th style={{ textAlign: "right" }}>Actions</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-blue-50 bg-white">
+          <tbody>
             {requests.map((r) => {
               const firstItem = r.items[0];
               return (
-                <tr key={r.id} className="hover:bg-blue-50/50 transition-colors">
-                  <td className="px-4 py-3 text-slate-400 whitespace-nowrap">
+                <tr key={r.id}>
+                  <td className="text-slate-400 whitespace-nowrap text-xs">
                     {new Date(r.created_at).toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 font-mono text-slate-700 whitespace-nowrap">{firstItem?.sku ?? "–"}</td>
-                  <td className="px-4 py-3 text-slate-700">{firstItem?.requested_qty ?? "–"}</td>
-                  <td className="px-4 py-3 text-slate-700">{firstItem?.approved_qty ?? "–"}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${r.status === "PENDING"
-                        ? "bg-amber-100 text-amber-700"
-                        : r.status === "ADJUSTED"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-emerald-100 text-emerald-700"
+                  <td className="font-mono text-slate-700 whitespace-nowrap">{firstItem?.sku ?? "–"}</td>
+                  <td className="text-slate-700">{firstItem?.requested_qty ?? "–"}</td>
+                  <td className="text-slate-700">{firstItem?.approved_qty ?? "–"}</td>
+                  <td>
+                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${r.status === "PENDING" ? "bg-amber-100 text-amber-700" :
+                        r.status === "ADJUSTED" ? "bg-[#e1f5fe] text-[#0288d1]" :
+                          "bg-emerald-100 text-emerald-700"
                       }`}>
                       {r.status}
                     </span>
                   </td>
                   {canEdit && firstItem && (
-                    <td className="px-4 py-3">
+                    <td>
                       <div className="flex justify-end gap-2">
                         <button type="button" disabled={updatingId === r.id}
                           onClick={() => {
@@ -475,13 +494,13 @@ export function TransferRequestsList({
                             if (Number.isNaN(next) || next < 0) return;
                             handleAdjust(r, next);
                           }}
-                          className="btn-adjust disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                          className="btn-adjust">
                           Adjust
                         </button>
                         <button type="button" disabled={updatingId === r.id}
                           onClick={() => handleApprove(r)}
-                          className="btn-approve disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                          {updatingId === r.id ? "…" : "Approve"}
+                          className="btn-approve">
+                          {updatingId === r.id ? "…" : "Approve ✓"}
                         </button>
                       </div>
                     </td>
@@ -491,7 +510,7 @@ export function TransferRequestsList({
             })}
             {requests.length === 0 && (
               <tr>
-                <td className="px-4 py-8 text-center text-xs text-slate-400" colSpan={canEdit ? 6 : 5}>
+                <td className="py-10 text-center text-sm text-slate-400" colSpan={canEdit ? 6 : 5}>
                   No transfer requests yet.
                 </td>
               </tr>
