@@ -138,58 +138,38 @@ export function ManufacturingTransferForm({ fromDept, toDept }: ManufacturingFor
 
   return (
     <section className="space-y-4 rounded-xl border border-blue-100 bg-white shadow-sm p-4">
-      <h2 className="text-sm font-semibold text-blue-950">
+      <h2 className="text-sm font-semibold text-slate-800">
         Request Raw Materials from Procurement
       </h2>
       <p className="text-xs text-slate-400">
         Manufacturing creates a PENDING request that Procurement can adjust or approve.
       </p>
-      <div className="grid gap-3 text-sm md:grid-cols-[2fr,1.3fr]">
+      <div className="grid gap-4 text-sm md:grid-cols-[2fr,1.3fr]">
         <div className="space-y-2">
-          <label className="block text-slate-700">Raw Material</label>
-          <div className="overflow-hidden rounded-lg border border-blue-100 max-h-60">
-            <table className="min-w-full divide-y divide-slate-800 text-xs">
-              <thead className="bg-blue-50">
+          <label className="block text-xs font-medium text-slate-500">Raw Material</label>
+          <div className="table-wrap max-h-60 overflow-y-auto">
+            <table className="min-w-full divide-y divide-blue-100 text-xs">
+              <thead className="sticky top-0 bg-blue-50">
                 <tr>
-                  <th className="px-2 py-1 text-left font-medium text-slate-700">
-                    Name
-                  </th>
-                  <th className="px-2 py-1 text-left font-medium text-slate-700">
-                    SKU
-                  </th>
-                  <th className="px-2 py-1 text-left font-medium text-slate-700">
-                    Qty
-                  </th>
+                  <th className="px-4 py-2 text-left font-semibold text-slate-600">Name</th>
+                  <th className="px-4 py-2 text-left font-semibold text-slate-600">SKU</th>
+                  <th className="px-4 py-2 text-left font-semibold text-slate-600">Qty</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 bg-white">
+              <tbody className="divide-y divide-blue-50 bg-white">
                 {materials.map((m) => (
                   <tr
                     key={m.id}
-                    className={
-                      selectedId === m.id
-                        ? "bg-blue-100/50"
-                        : "cursor-pointer hover:bg-blue-50/50"
-                    }
+                    className={selectedId === m.id ? "bg-blue-100" : "cursor-pointer hover:bg-blue-50 transition-colors"}
                     onClick={() => setSelectedId(m.id)}
                   >
-                    <td className="px-2 py-1">{m.name}</td>
-                    <td className="px-2 py-1 text-slate-700">{m.sku}</td>
-                    <td className="px-2 py-1">
-                      {m.quantity}{" "}
-                      <span className="text-[10px] text-slate-400">{m.unit}</span>
-                    </td>
+                    <td className="px-4 py-2 text-slate-800">{m.name}</td>
+                    <td className="px-4 py-2 text-slate-500 font-mono">{m.sku}</td>
+                    <td className="px-4 py-2 text-slate-800">{m.quantity} <span className="text-[10px] text-slate-400">{m.unit}</span></td>
                   </tr>
                 ))}
                 {materials.length === 0 && (
-                  <tr>
-                    <td
-                      className="px-3 py-4 text-center text-xs text-slate-400"
-                      colSpan={3}
-                    >
-                      No raw materials defined.
-                    </td>
-                  </tr>
+                  <tr><td className="px-4 py-6 text-center text-xs text-slate-400" colSpan={3}>No raw materials defined.</td></tr>
                 )}
               </tbody>
             </table>
@@ -197,22 +177,16 @@ export function ManufacturingTransferForm({ fromDept, toDept }: ManufacturingFor
         </div>
         <div className="space-y-3">
           <div className="space-y-1">
-            <label className="block text-slate-700">Requested Quantity</label>
+            <label className="block text-xs font-medium text-slate-500">Requested Quantity</label>
             <input
-              type="number"
-              min={1}
-              value={qty}
+              type="number" min={1} value={qty}
               onChange={(e) => setQty(parseInt(e.target.value || "1", 10))}
-              className="w-full rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm outline-none focus:border-sky-500"
+              className="w-full rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!selectedMaterial || submitting}
-            className="inline-flex w-full items-center justify-center rounded-md bg-sky-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:bg-slate-600"
-          >
-            {submitting ? "Submitting..." : "Create Request"}
+          <button type="button" onClick={handleSubmit} disabled={!selectedMaterial || submitting}
+            className="btn-approve w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+            {submitting ? "Submitting…" : "Create Request"}
           </button>
         </div>
       </div>
@@ -307,51 +281,34 @@ export function ProducedGoodsTransferForm({
 
   return (
     <section className="space-y-4 rounded-xl border border-blue-100 bg-white shadow-sm p-4">
-      <h2 className="text-sm font-semibold text-blue-950">{title}</h2>
+      <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
       <p className="text-xs text-slate-400">{helperText}</p>
-      <div className="grid gap-3 text-sm md:grid-cols-[2fr,1.3fr]">
+      <div className="grid gap-4 text-sm md:grid-cols-[2fr,1.3fr]">
         <div className="space-y-2">
-          <label className="block text-slate-700">Produced Good</label>
-          <div className="overflow-hidden rounded-lg border border-blue-100 max-h-60">
-            <table className="min-w-full divide-y divide-slate-800 text-xs">
-              <thead className="bg-blue-50">
+          <label className="block text-xs font-medium text-slate-500">Produced Good</label>
+          <div className="table-wrap max-h-60 overflow-y-auto">
+            <table className="min-w-full divide-y divide-blue-100 text-xs">
+              <thead className="sticky top-0 bg-blue-50">
                 <tr>
-                  <th className="px-2 py-1 text-left font-medium text-slate-700">
-                    Name
-                  </th>
-                  <th className="px-2 py-1 text-left font-medium text-slate-700">
-                    SKU
-                  </th>
-                  <th className="px-2 py-1 text-left font-medium text-slate-700">
-                    Qty
-                  </th>
+                  <th className="px-4 py-2 text-left font-semibold text-slate-600">Name</th>
+                  <th className="px-4 py-2 text-left font-semibold text-slate-600">SKU</th>
+                  <th className="px-4 py-2 text-left font-semibold text-slate-600">Qty</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 bg-white">
+              <tbody className="divide-y divide-blue-50 bg-white">
                 {goods.map((g) => (
                   <tr
                     key={g.id}
-                    className={
-                      selectedId === g.id
-                        ? "bg-blue-100/50"
-                        : "cursor-pointer hover:bg-blue-50/50"
-                    }
+                    className={selectedId === g.id ? "bg-blue-100" : "cursor-pointer hover:bg-blue-50 transition-colors"}
                     onClick={() => setSelectedId(g.id)}
                   >
-                    <td className="px-2 py-1">{g.name}</td>
-                    <td className="px-2 py-1 text-slate-700">{g.sku}</td>
-                    <td className="px-2 py-1">{g.quantity}</td>
+                    <td className="px-4 py-2 text-slate-800">{g.name}</td>
+                    <td className="px-4 py-2 text-slate-500 font-mono">{g.sku}</td>
+                    <td className="px-4 py-2 text-slate-800">{g.quantity}</td>
                   </tr>
                 ))}
                 {goods.length === 0 && (
-                  <tr>
-                    <td
-                      className="px-3 py-4 text-center text-xs text-slate-400"
-                      colSpan={3}
-                    >
-                      No produced goods defined.
-                    </td>
-                  </tr>
+                  <tr><td className="px-4 py-6 text-center text-xs text-slate-400" colSpan={3}>No produced goods defined.</td></tr>
                 )}
               </tbody>
             </table>
@@ -359,22 +316,15 @@ export function ProducedGoodsTransferForm({
         </div>
         <div className="space-y-3">
           <div className="space-y-1">
-            <label className="block text-slate-700">Requested Quantity</label>
-            <input
-              type="number"
-              min={1}
-              value={qty}
+            <label className="block text-xs font-medium text-slate-500">Requested Quantity</label>
+            <input type="number" min={1} value={qty}
               onChange={(e) => setQty(parseInt(e.target.value || "1", 10))}
-              className="w-full rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm outline-none focus:border-sky-500"
+              className="w-full rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!selectedGood || submitting}
-            className="inline-flex w-full items-center justify-center rounded-md bg-sky-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:bg-slate-600"
-          >
-            {submitting ? "Submitting..." : "Create Request"}
+          <button type="button" onClick={handleSubmit} disabled={!selectedGood || submitting}
+            className="btn-approve w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+            {submitting ? "Submitting…" : "Create Request"}
           </button>
         </div>
       </div>
@@ -472,102 +422,66 @@ export function TransferRequestsList({
 
   return (
     <section className="space-y-3 rounded-xl border border-blue-100 bg-white shadow-sm p-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-blue-950">
-          Transfer Requests ({fromDept} → {toDept})
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-slate-800">
+          Transfers: <span className="text-blue-600">{fromDept}</span> → <span className="text-blue-600">{toDept}</span>
         </h2>
         <span className="text-xs text-slate-400">
-          {role === "MANUFACTURING"
-            ? "Read-only view of request status."
-            : "Adjust quantities and approve when ready."}
+          {role === "MANUFACTURING" ? "Read-only view of request status." : "Adjust quantities and approve when ready."}
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-blue-100">
-        <table className="min-w-full divide-y divide-slate-800 text-xs">
+      <div className="table-wrap">
+        <table className="min-w-full divide-y divide-blue-100 text-xs">
           <thead className="bg-blue-50">
             <tr>
-              <th className="px-2 py-1 text-left font-medium text-slate-700">
-                Created
-              </th>
-              <th className="px-2 py-1 text-left font-medium text-slate-700">
-                Item (SKU)
-              </th>
-              <th className="px-2 py-1 text-left font-medium text-slate-700">
-                Requested
-              </th>
-              <th className="px-2 py-1 text-left font-medium text-slate-700">
-                Approved
-              </th>
-              <th className="px-2 py-1 text-left font-medium text-slate-700">
-                Status
-              </th>
-              {canEdit && (
-                <th className="px-2 py-1 text-right font-medium text-slate-700">
-                  Actions
-                </th>
-              )}
+              <th className="px-4 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap">Created</th>
+              <th className="px-4 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap">Item (SKU)</th>
+              <th className="px-4 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap">Requested</th>
+              <th className="px-4 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap">Approved</th>
+              <th className="px-4 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap">Status</th>
+              {canEdit && <th className="px-4 py-2.5 text-right font-semibold text-slate-600 whitespace-nowrap">Actions</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800 bg-white">
+          <tbody className="divide-y divide-blue-50 bg-white">
             {requests.map((r) => {
               const firstItem = r.items[0];
-
               return (
-                <tr key={r.id}>
-                  <td className="px-2 py-1 text-slate-400">
+                <tr key={r.id} className="hover:bg-blue-50/50 transition-colors">
+                  <td className="px-4 py-3 text-slate-400 whitespace-nowrap">
                     {new Date(r.created_at).toLocaleString()}
                   </td>
-                  <td className="px-2 py-1">
-                    {firstItem?.sku ?? "-"}
-                  </td>
-                  <td className="px-2 py-1">
-                    {firstItem?.requested_qty ?? "-"}
-                  </td>
-                  <td className="px-2 py-1">
-                    {firstItem?.approved_qty ?? "-"}
-                  </td>
-                  <td className="px-2 py-1">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                        r.status === "PENDING"
-                          ? "bg-amber-500/15 text-amber-800"
-                          : r.status === "ADJUSTED"
-                          ? "bg-sky-500/15 text-blue-800"
-                          : "bg-emerald-500/15 text-emerald-800"
-                      }`}
-                    >
+                  <td className="px-4 py-3 font-mono text-slate-700 whitespace-nowrap">{firstItem?.sku ?? "–"}</td>
+                  <td className="px-4 py-3 text-slate-700">{firstItem?.requested_qty ?? "–"}</td>
+                  <td className="px-4 py-3 text-slate-700">{firstItem?.approved_qty ?? "–"}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${r.status === "PENDING"
+                        ? "bg-amber-100 text-amber-700"
+                        : r.status === "ADJUSTED"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-emerald-100 text-emerald-700"
+                      }`}>
                       {r.status}
                     </span>
                   </td>
                   {canEdit && firstItem && (
-                    <td className="px-2 py-1 text-right">
-                      <div className="flex justify-end gap-1">
-                        <button
-                          type="button"
-                          disabled={updatingId === r.id}
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-2">
+                        <button type="button" disabled={updatingId === r.id}
                           onClick={() => {
-                            // eslint-disable-next-line no-alert
-                            const input = window.prompt(
-                              "Approved quantity:",
-                              String(firstItem.approved_qty ?? firstItem.requested_qty)
-                            );
+                            const input = window.prompt("Approved quantity:", String(firstItem.approved_qty ?? firstItem.requested_qty));
                             if (input == null) return;
                             const next = Number(input);
                             if (Number.isNaN(next) || next < 0) return;
                             handleAdjust(r, next);
                           }}
-                          className="rounded-md bg-white border border-blue-200 px-3 py-1.5 text-[11px] font-semibold text-blue-700 shadow-sm hover:bg-blue-50 hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:transform-none transition-all duration-300 ease-in-out rounded-lg"
-                        >
+                          className="btn-adjust disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                           Adjust
                         </button>
-                        <button
-                          type="button"
-                          disabled={updatingId === r.id}
+                        <button type="button" disabled={updatingId === r.id}
                           onClick={() => handleApprove(r)}
-                          className="rounded-md bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-md hover:bg-blue-500 hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none transition-all duration-300 ease-in-out rounded-lg"
-                        >
-                          Approve
+                          className="btn-approve disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                          {updatingId === r.id ? "…" : "Approve"}
                         </button>
                       </div>
                     </td>
@@ -577,10 +491,7 @@ export function TransferRequestsList({
             })}
             {requests.length === 0 && (
               <tr>
-                <td
-                  className="px-3 py-4 text-center text-xs text-slate-400"
-                  colSpan={canEdit ? 6 : 5}
-                >
+                <td className="px-4 py-8 text-center text-xs text-slate-400" colSpan={canEdit ? 6 : 5}>
                   No transfer requests yet.
                 </td>
               </tr>
